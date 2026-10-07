@@ -1,0 +1,251 @@
+.jobmatching-stage {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  box-sizing: border-box;
+  background: #ebe9e4;
+  font-family: "Poppins", system-ui, sans-serif;
+}
+
+.jobmatching-card {
+  width: min(100%, 375px);
+  min-height: 610px;
+  box-sizing: border-box;
+  padding: 23px 22px 20px;
+  border: 1px solid rgba(20, 47, 35, 0.08);
+  border-radius: 31px;
+  color: #193129;
+  background: #fffdf8;
+  box-shadow: 0 25px 55px rgba(37, 53, 46, 0.14);
+}
+
+.jobmatching-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.jobmatching-brand {
+  color: #0f9a59;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.8px;
+}
+
+.jobmatching-context {
+  color: #88918d;
+  font-size: 10px;
+  letter-spacing: 0.2px;
+}
+
+.jobmatching-intro {
+  display: flex;
+  align-items: center;
+  gap: 17px;
+  margin-top: 34px;
+}
+
+.jobmatching-score-ring {
+  display: grid;
+  width: 112px;
+  height: 112px;
+  flex: 0 0 112px;
+  place-items: center;
+  border-radius: 50%;
+  background: conic-gradient(#0f9a59 0deg 309.6deg, #dce9df 309.6deg 360deg);
+  transform: rotate(-35deg);
+}
+
+.jobmatching-score-inner {
+  display: flex;
+  width: 88px;
+  height: 88px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #fffdf8;
+  transform: rotate(35deg);
+}
+
+.jobmatching-score-inner strong {
+  color: #193129;
+  font-size: 27px;
+  line-height: 1;
+  letter-spacing: -1.6px;
+}
+
+.jobmatching-score-inner strong span {
+  color: #0f9a59;
+  font-size: 15px;
+  letter-spacing: -0.4px;
+}
+
+.jobmatching-score-inner small {
+  margin-top: 5px;
+  color: #77847e;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.jobmatching-intro-copy {
+  min-width: 0;
+}
+
+.jobmatching-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  color: #0f9a59;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.jobmatching-intro-copy h1 {
+  margin: 7px 0 5px;
+  color: #193129;
+  font-size: 21px;
+  line-height: 1.05;
+  letter-spacing: -0.8px;
+}
+
+.jobmatching-intro-copy > p:last-child {
+  margin: 0;
+  color: #7d8983;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.jobmatching-highlight {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 28px;
+  padding: 11px 13px;
+  border-radius: 13px;
+  color: #486055;
+  background: #edf7ef;
+}
+
+.jobmatching-highlight-dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 50%;
+  background: #0f9a59;
+  box-shadow: 0 0 0 4px rgba(15, 154, 89, 0.12);
+}
+
+.jobmatching-highlight p {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.jobmatching-highlight strong {
+  color: #193129;
+}
+
+.jobmatching-proof-list {
+  display: flex;
+  flex-direction: column;
+  margin-top: 18px;
+}
+
+.jobmatching-proof {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 61px;
+  border-bottom: 1px solid #eef0eb;
+}
+
+.jobmatching-proof-icon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  place-items: center;
+  border-radius: 10px;
+  color: #0f9a59;
+  background: #edf7ef;
+}
+
+.jobmatching-proof-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.jobmatching-proof-copy p {
+  margin: 0;
+  color: #89928d;
+  font-size: 10px;
+}
+
+.jobmatching-proof-copy strong {
+  overflow: hidden;
+  margin-top: 2px;
+  color: #193129;
+  font-size: 11px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.jobmatching-proof-copy small {
+  margin-top: 3px;
+  color: #809088;
+  font-size: 9px;
+  line-height: 1.3;
+}
+
+.jobmatching-proof-check {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  background: #0f9a59;
+}
+
+.jobmatching-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 16px;
+  padding: 11px;
+  border: 0;
+  border-radius: 11px;
+  color: #0f9a59;
+  background: transparent;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.jobmatching-toggle svg {
+  transition: transform 160ms ease;
+}
+
+.jobmatching-toggle.is-expanded svg {
+  transform: rotate(180deg);
+}
+
+.jobmatching-footnote {
+  margin: 14px 8px 0;
+  color: #a0aaa4;
+  font-size: 9px;
+  line-height: 1.45;
+  text-align: center;
+}

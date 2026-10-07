@@ -1,0 +1,1 @@
+ALTER TABLE "profiles" ADD COLUMN "premium_trial_until" timestamp with time zone;

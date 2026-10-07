@@ -1,0 +1,173 @@
+:root {
+  --editorial-paper: #f4eee4;
+  --editorial-ink: #25211d;
+  --editorial-muted: #786f65;
+  --editorial-line: #d8cbbb;
+  --editorial-accent: #c65d3b;
+  --editorial-soft: #ead9c8;
+}
+
+.editorial-shell {
+  min-height: 100dvh;
+  overflow: hidden;
+  color: var(--editorial-ink);
+  background: var(--editorial-paper);
+  font-family: "DM Sans", "Trebuchet MS", sans-serif;
+}
+
+.editorial-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 20px 12px;
+  border-bottom: 1px solid var(--editorial-line);
+}
+
+.editorial-header img {
+  width: 132px;
+  height: 38px;
+  object-fit: contain;
+  object-position: left center;
+  filter: sepia(.35) saturate(.75);
+}
+
+.editorial-refresh,
+.editorial-save {
+  display: grid;
+  place-items: center;
+  border: 0;
+  color: var(--editorial-muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.editorial-refresh {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--editorial-line);
+  border-radius: 50%;
+}
+
+.editorial-refresh:hover,
+.editorial-save:hover,
+.editorial-save.is-saved { color: var(--editorial-accent); }
+
+.editorial-spin { animation: editorial-spin 650ms ease-in-out; }
+@keyframes editorial-spin { to { transform: rotate(360deg); } }
+
+.editorial-intro { padding: 25px 21px 18px; }
+.editorial-kicker {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--editorial-accent);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.editorial-intro h1 {
+  margin: 12px 0 9px;
+  color: var(--editorial-ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 39px;
+  line-height: .95;
+  letter-spacing: -.06em;
+  font-weight: 500;
+}
+
+.editorial-intro h1 em {
+  color: var(--editorial-accent);
+  font-style: italic;
+}
+
+.editorial-intro p {
+  max-width: 290px;
+  margin: 0;
+  color: var(--editorial-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.editorial-lead-wrap { padding: 0 14px; }
+.editorial-lead {
+  position: relative;
+  overflow: hidden;
+  padding: 18px 17px 15px;
+  border: 1px solid var(--editorial-ink);
+  border-radius: 4px;
+  background: #f8f2e9;
+  box-shadow: 5px 5px 0 var(--editorial-soft);
+  cursor: pointer;
+}
+
+.editorial-lead::after {
+  content: "01";
+  position: absolute;
+  right: 13px;
+  bottom: -12px;
+  color: rgba(198, 93, 59, .12);
+  font-family: Georgia, serif;
+  font-size: 112px;
+  line-height: 1;
+}
+
+.editorial-lead-top {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.editorial-company-mark,
+.editorial-row-mark {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: #f8f2e9;
+  background: var(--editorial-ink);
+  font-family: Georgia, serif;
+  border-radius: 50%;
+}
+
+.editorial-company-mark { width: 38px; height: 38px; font-size: 17px; }
+.editorial-company { flex: 1; font-size: 12px; font-weight: 800; letter-spacing: .01em; }
+.editorial-save { width: 30px; height: 30px; position: relative; z-index: 2; }
+.editorial-lead-score {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  margin-top: 19px;
+  color: var(--editorial-accent);
+}
+.editorial-lead-score strong { font-family: Georgia, serif; font-size: 47px; line-height: 1; font-weight: 500; }
+.editorial-lead-score span { color: var(--editorial-muted); font-size: 10px; line-height: 1.05; text-transform: uppercase; letter-spacing: .1em; }
+.editorial-lead h2 { max-width: 285px; margin: 6px 0 12px; font-family: Georgia, serif; font-size: 22px; line-height: 1.1; letter-spacing: -.04em; font-weight: 500; }
+.editorial-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; color: var(--editorial-muted); font-size: 11px; }
+.editorial-meta span { display: inline-flex; align-items: center; gap: 4px; }
+.editorial-type { padding: 4px 9px; color: #f8f2e9; background: var(--editorial-accent); border-radius: 2px; font-weight: 800; }
+.editorial-reason { margin: 17px 0 15px; padding: 11px 12px; border-left: 2px solid var(--editorial-accent); background: var(--editorial-soft); }
+.editorial-reason-label { display: flex; align-items: center; gap: 6px; color: var(--editorial-accent); font-size: 11px; font-weight: 800; }
+.editorial-reason p { margin: 6px 0 0; color: #5d5146; font-size: 12px; line-height: 1.42; }
+.editorial-reason b { color: var(--editorial-ink); }
+.editorial-lead-bottom { display: flex; align-items: center; justify-content: space-between; color: var(--editorial-muted); font-size: 11px; }
+.editorial-lead-bottom > span { display: inline-flex; align-items: center; gap: 5px; }
+.editorial-cta { display: flex; align-items: center; gap: 5px; padding: 9px 12px; border: 0; border-radius: 2px; color: #f8f2e9; background: var(--editorial-ink); font-size: 12px; font-weight: 800; cursor: pointer; }
+.editorial-open-note { margin-top: 10px; color: var(--editorial-accent); font-size: 11px; }
+.editorial-queue { padding: 27px 14px 24px; }
+.editorial-queue-heading { display: flex; align-items: baseline; justify-content: space-between; padding: 0 4px 9px; }
+.editorial-queue-heading h3 { margin: 0; font-family: Georgia, serif; font-size: 16px; font-weight: 500; }
+.editorial-queue-heading span { color: var(--editorial-muted); font-size: 11px; }
+.editorial-row { display: flex; align-items: center; gap: 10px; min-height: 72px; padding: 12px 3px; border-top: 1px solid var(--editorial-line); cursor: pointer; }
+.editorial-row.is-opened { background: rgba(198, 93, 59, .06); }
+.editorial-row-mark { width: 34px; height: 34px; color: var(--editorial-ink); background: var(--editorial-soft); font-size: 14px; }
+.editorial-row-copy { min-width: 0; flex: 1; }
+.editorial-row-company { overflow: hidden; color: var(--editorial-muted); font-size: 10px; font-weight: 800; text-transform: uppercase; text-overflow: ellipsis; white-space: nowrap; letter-spacing: .05em; }
+.editorial-row-company span { color: var(--editorial-accent); }
+.editorial-row h4 { overflow: hidden; margin: 3px 0 4px; font-family: Georgia, serif; font-size: 14px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.editorial-row-meta { color: var(--editorial-muted); font-size: 10px; }
+.editorial-row-meta span { color: #b5a594; padding: 0 3px; }
+.editorial-chevron { color: #9b8a7a; }
+@media (max-width: 360px) { .editorial-intro h1 { font-size: 34px; } }

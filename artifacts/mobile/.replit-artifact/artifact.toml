@@ -1,0 +1,29 @@
+kind = "mobile"
+previewPath = "/"
+title = "Jobagogo"
+version = "1.0.0"
+id = "artifacts/mobile"
+router = "expo-domain"
+
+[[integratedSkills]]
+name = "expo"
+version = "1.0.0"
+
+[[services]]
+ensurePreviewReachable = "/status"
+name = "expo"
+paths = [ "/" ]
+localPort = 18115
+
+[services.development]
+run = "EXPO_PUBLIC_API_URL=https://$REPLIT_DEV_DOMAIN pnpm --filter @workspace/mobile run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/mobile", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/mobile", "run", "serve" ]
+
+[services.env]
+PORT = "18115"
+BASE_PATH = "/"
+EXPO_PUBLIC_API_URL = "https://job-matcher.replit.app"
+PUBLIC_API_ORIGIN = "http://127.0.0.1:5000"

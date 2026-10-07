@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1086481509944",
+    "project_id": "jobagogo-1a989",
+    "storage_bucket": "jobagogo-1a989.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1086481509944:android:695de54614113d0236c0cd",
+        "android_client_info": {
+          "package_name": "pro.jobagogo.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDgSAPYUYryzOsGWEoP6LAWYn6svRqW9kk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

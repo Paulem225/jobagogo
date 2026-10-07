@@ -1,0 +1,231 @@
+.matching-proof-variant-stage {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  box-sizing: border-box;
+  background: #e9e9ea;
+  font-family: "Poppins", system-ui, sans-serif;
+}
+
+.matching-proof-variant-card {
+  width: min(375px, 100%);
+  box-sizing: border-box;
+  padding: 22px 20px 18px;
+  border: 1px solid rgba(14, 157, 87, 0.16);
+  border-radius: 27px;
+  color: #16221f;
+  background:
+    radial-gradient(circle at 91% 2%, rgba(132, 222, 168, 0.26), transparent 31%),
+    #f7fbf8;
+  box-shadow: 0 24px 60px rgba(31, 52, 43, 0.16);
+}
+
+.matching-proof-variant-topline {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.matching-proof-variant-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #0e9d57;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+}
+
+.matching-proof-variant-eyebrow-icon {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  place-items: center;
+  border-radius: 9px;
+  background: #dcf5e6;
+}
+
+.matching-proof-variant-score {
+  display: flex;
+  width: 58px;
+  height: 58px;
+  flex: 0 0 58px;
+  align-items: center;
+  justify-content: center;
+  border: 5px solid #0e9d57;
+  border-radius: 50%;
+  color: #0e9d57;
+  background: #fff;
+  transform: rotate(8deg);
+}
+
+.matching-proof-variant-score strong {
+  font-size: 20px;
+  line-height: 1;
+  transform: rotate(-8deg);
+}
+
+.matching-proof-variant-score span {
+  margin: 8px 0 0 1px;
+  font-size: 10px;
+  font-weight: 700;
+  transform: rotate(-8deg);
+}
+
+.matching-proof-variant-card h1 {
+  max-width: 235px;
+  margin: 20px 0 0;
+  color: #13221d;
+  font-size: 25px;
+  line-height: 1.08;
+  letter-spacing: -0.8px;
+}
+
+.matching-proof-variant-intro {
+  max-width: 300px;
+  margin: 9px 0 0;
+  color: #6d7b74;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.matching-proof-variant-meter {
+  margin-top: 21px;
+}
+
+.matching-proof-variant-meter-track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #dcebe2;
+}
+
+.matching-proof-variant-meter-track span {
+  display: block;
+  width: 86%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #56c986, #0e9d57);
+}
+
+.matching-proof-variant-meter-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  color: #0e9d57;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.matching-proof-variant-meter-labels span:last-child {
+  color: #839088;
+  font-weight: 500;
+}
+
+.matching-proof-variant-highlight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 12px;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.matching-proof-variant-highlight-icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  place-items: center;
+  border-radius: 12px;
+  color: #0e9d57;
+  background: #e1f6e9;
+}
+
+.matching-proof-variant-highlight div,
+.matching-proof-variant-detail div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.matching-proof-variant-highlight strong {
+  color: #1e2d27;
+  font-size: 12px;
+}
+
+.matching-proof-variant-highlight span:last-child {
+  margin-top: 2px;
+  color: #87938d;
+  font-size: 10px;
+}
+
+.matching-proof-variant-toggle {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 15px;
+  padding: 4px 0;
+  border: 0;
+  color: #0e9d57;
+  background: transparent;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.matching-proof-variant-toggle svg {
+  transition: transform 160ms ease;
+}
+
+.matching-proof-variant-toggle svg.is-open {
+  transform: rotate(180deg);
+}
+
+.matching-proof-variant-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  margin-top: 11px;
+  padding-top: 13px;
+  border-top: 1px solid #dfede4;
+}
+
+.matching-proof-variant-detail {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  min-width: 0;
+}
+
+.matching-proof-variant-detail-icon {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  place-items: center;
+  border-radius: 8px;
+  color: #0e9d57;
+  background: #e7f7ed;
+}
+
+.matching-proof-variant-detail strong {
+  color: #2d3a34;
+  font-size: 10px;
+}
+
+.matching-proof-variant-detail span:last-child {
+  margin-top: 2px;
+  overflow: hidden;
+  color: #89958f;
+  font-size: 9px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+}

@@ -1,0 +1,36 @@
+modules = ["nodejs-24", "python-base-3.13", "postgresql-16"]
+
+[deployment]
+router = "application"
+deploymentTarget = "autoscale"
+
+[deployment.postBuild]
+args = ["pnpm", "store", "prune"]
+env = { "CI" = "true" }
+
+[workflows]
+
+[agent]
+stack = "PNPM_WORKSPACE"
+expertMode = true
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 20000
+
+[nix]
+channel = "stable-25_05"
+
+[userenv]
+
+[userenv.development]
+HUB2_ENVIRONMENT = "sandbox"
+
+[userenv.production]
+HUB2_ENVIRONMENT = "live"
+
+[userenv.shared]
+RESEND_FROM_EMAIL = "Jobagogo <noreply@jobagogo.pro>"
+APP_REVIEW_DEMO_ENABLED = "true"
+ADMIN_EMAILS = "tiapaule@gmail.com"
+APPLE_APP_STORE_CONNECT_ISSUER_ID = "f49c35e0-848e-42a6-9700-e28a88ab79c6"

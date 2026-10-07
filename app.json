@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "dd4fbaa8-7103-42cd-b8a2-a1bf13d13947"
+      }
+    },
+    "android": {
+      "package": "pro.jobagogo.app"
+    },
+    "ios": {
+      "bundleIdentifier": "pro.jobagogo.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    }
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1786976972193,
+      "tag": "0000_busy_garia",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1786980213455,
+      "tag": "0001_unique_boom_boom",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787241603422,
+      "tag": "0002_lame_talon",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787737851732,
+      "tag": "0003_hesitant_network",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788001394624,
+      "tag": "0004_chemical_hammerhead",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789123569104,
+      "tag": "0005_hot_mulholland_black",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789809035648,
+      "tag": "0006_moaning_sunset_bain",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790621385544,
+      "tag": "0007_fluffy_tyger_tiger",
+      "breakpoints": true
+    }
+  ]
+}

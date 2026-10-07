@@ -1,0 +1,2320 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: JobMatch API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: auth
+    description: Email OTP authentication operations
+  - name: health
+    description: Health operations
+  - name: profile
+    description: Candidate profile operations
+  - name: jobs
+    description: Job listing operations
+  - name: matches
+    description: Job matching operations
+  - name: cvs
+    description: Candidate CV analysis operations
+  - name: admin
+    description: Private, read-only administration API for authorized operators
+paths:
+  /auth/request-code:
+    post:
+      operationId: requestAuthCode
+      tags: [auth]
+      summary: Send a one-time login code by email
+      description: |
+        Ordinary accounts receive a random code by email. If the server has an
+        explicitly configured App Review login credential, its email receives
+        the same success response without mail delivery. No review-only session
+        or feature mode is created.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthEmailInput"
+      responses:
+        "200":
+          description: Code sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthCodeSent"
+        "400":
+          description: Invalid email
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Code request cooldown
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Email provider unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/verify-code:
+    post:
+      operationId: verifyAuthCode
+      tags: [auth]
+      summary: Verify an email login code and create a session
+      description: |
+        Ordinary accounts require a valid, unused email OTP challenge. The
+        explicitly configured App Review email can instead authenticate with
+        its configured fixed code. Both methods issue the same ordinary session
+        and use the same profile, Premium entitlements, and authorization rules.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthVerifyInput"
+      responses:
+        "200":
+          description: Authenticated session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSession"
+        "400":
+          description: Invalid email or code format
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Invalid or expired code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/me:
+    get:
+      operationId: getAuthMe
+      tags: [auth]
+      summary: Get the current authenticated account
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSessionUser"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logoutAuth
+      tags: [auth]
+      summary: Revoke the current session
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Session revoked
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/auth/me:
+    get:
+      operationId: getAdminSession
+      tags: [admin]
+      summary: Verify the current session has administrator access
+      description: >
+        Authenticate with the regular OTP flow first
+        (POST /auth/request-code then POST /auth/verify-code). The email must
+        also be present in the server-side ADMIN_EMAILS allowlist. This route
+        never returns a session token.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Authorized administrator session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSession"
+        "401":
+          description: Missing, expired, revoked, or invalid session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Authenticated user is not an administrator
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Administrator allowlist is not configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/users:
+    get:
+      operationId: listAdminUsers
+      tags: [admin]
+      summary: List users with pagination and operational filters
+      description: >
+        Private read-only endpoint. Search and filter values are never written
+        to access logs. registeredFrom and registeredTo use the earliest
+        authenticated session creation date available for the account.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 25
+        - name: email
+          in: query
+          description: Case-insensitive substring match
+          schema:
+            type: string
+        - name: city
+          in: query
+          description: Case-insensitive substring match on the profile location
+          schema:
+            type: string
+        - name: profession
+          in: query
+          description: Case-insensitive match on target or latest job title
+          schema:
+            type: string
+        - name: search
+          in: query
+          description: Case-insensitive match on name, email, city, or target title
+          schema:
+            type: string
+        - name: premiumStatus
+          in: query
+          schema:
+            type: string
+            enum: [all, active, inactive, "true", "false"]
+        - name: registeredFrom
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: registeredTo
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: updatedFrom
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: updatedTo
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Paginated user list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUserList"
+        "400":
+          description: Invalid pagination, date, or Premium filter
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Missing, expired, revoked, or invalid session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Authenticated user is not an administrator
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Administrator allowlist is not configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/users/{profileId}:
+    get:
+      operationId: getAdminUser
+      tags: [admin]
+      summary: Get an operational user record
+      description: >
+        Returns the explicitly allowed profile projection, CV metadata and
+        analyses, saved jobs, non-sensitive session activity, and payment
+        history. Password/code hashes, session token hashes, device secret
+        hashes, and raw push tokens are never returned.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: profileId
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: User detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUserDetail"
+        "400":
+          description: Invalid user identifier
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Missing, expired, revoked, or invalid session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Authenticated user is not an administrator
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: User does not exist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Administrator allowlist is not configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/stats:
+    get:
+      operationId: getAdminStats
+      tags: [admin]
+      summary: Get aggregate operational statistics
+      description: Aggregate counts and completed payment amounts; no personal data is included.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Aggregate statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+        "401":
+          description: Missing, expired, revoked, or invalid session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Authenticated user is not an administrator
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Administrator allowlist is not configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/notifications:
+    post:
+      operationId: sendAdminNotification
+      tags: [admin]
+      summary: Send a manual Firebase notification to enabled devices
+      description: >
+        Sends the notification to every active Firebase device belonging to a
+        profile with notifications enabled. Invalid Firebase tokens are
+        disabled and included in the response counters. Raw push tokens are
+        never returned.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminNotificationInput"
+      responses:
+        "200":
+          description: Notification delivery counters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminNotificationResult"
+        "400":
+          description: Invalid notification payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Missing, expired, revoked, or invalid session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Authenticated user is not an administrator
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Firebase could not process the notification request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Administrator allowlist is not configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /profile:
+    get:
+      operationId: getProfile
+      tags: [profile]
+      summary: Get candidate profile
+      description: Returns the stored candidate profile
+      responses:
+        "200":
+          description: Profile found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CandidateProfile"
+        "404":
+          description: No profile found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteProfile
+      tags: [profile]
+      summary: Delete the current profile and all associated data
+      description: >
+        Permanently deletes the profile, CVs, saved jobs, and payment records.
+        Requires the authenticated email session and a short-lived confirmation
+        token obtained from POST /profile/delete-token. The confirmation token
+        is single-use and expires after 15 minutes.
+      parameters:
+        - name: X-Delete-Token
+          in: header
+          required: true
+          description: "One-time confirmation token obtained from POST /profile/delete-token"
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Profile and all associated data deleted
+        "401":
+          description: Missing or invalid delete token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: No profile found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: upsertProfile
+      tags: [profile]
+      summary: Create or update candidate profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CandidateProfileInput"
+      responses:
+        "200":
+          description: Profile saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CandidateProfile"
+        "409":
+          description: Profession change requires payment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfessionChangeRequiredError"
+
+  /profile/delete-token:
+    post:
+      operationId: createProfileDeleteToken
+      tags: [profile]
+      summary: Request a short-lived token to delete the current profile
+      description: >
+        Issues a one-time, 15-minute confirmation token that must be presented
+        in X-Delete-Token to DELETE /profile. The token is stored server-side
+        and is never returned by GET /profile. The current authenticated email
+        session is required.
+      responses:
+        "200":
+          description: Delete token issued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountDeleteToken"
+        "401":
+          description: Missing, invalid, or unregistered device secret
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Request originated from a web browser (Origin header present)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: No profile found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /profile/photo:
+    post:
+      operationId: uploadProfilePhoto
+      tags: [profile]
+      summary: Add or replace the current profile photo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfilePhotoInput"
+      responses:
+        "200":
+          description: Profile photo saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CandidateProfile"
+        "400":
+          description: Invalid or oversized photo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: No profile found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteProfilePhoto
+      tags: [profile]
+      summary: Remove the current profile photo
+      responses:
+        "200":
+          description: Profile photo removed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CandidateProfile"
+        "404":
+          description: No profile found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /profile/notifications:
+    post:
+      operationId: registerProfileNotifications
+      tags: [profile]
+      summary: Enable or disable Firebase notifications for the current profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationRegistrationInput"
+      responses:
+        "200":
+          description: Notification preference saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationRegistration"
+        "400":
+          description: Invalid notification registration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /profile/notifications/test:
+    post:
+      operationId: sendTestProfileNotification
+      tags: [profile]
+      summary: Send an immediate test notification for an existing job
+      description: >
+        Sends a notification to all Firebase devices registered for the current profile
+        for the selected existing job. This bypasses the scheduled scrape and
+        normal match threshold, but still requires notifications to be enabled
+        and a valid push token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationTestInput"
+      responses:
+        "200":
+          description: Test notification accepted by Firebase Cloud Messaging
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationTest"
+        "400":
+          description: Notifications are not enabled or request is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Profile or job not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Firebase rejected the notification
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /error-reports:
+    post:
+      operationId: createErrorReport
+      tags: [error-reports]
+      summary: Submit a user-reported app issue
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/ErrorReportInput"
+      responses:
+        "201":
+          description: Error report received
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorReport"
+        "400":
+          description: Invalid error report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /profile/profession-change/payments:
+    post:
+      operationId: createProfessionChangePayment
+      tags: [profile]
+      summary: Create a Hub2 payment link to change profession before the monthly limit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfessionChangePaymentInput"
+      responses:
+        "201":
+          description: Profession change payment link created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfessionChangePayment"
+        "400":
+          description: Profession change is not eligible for payment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: No profile found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Hub2 unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /profile/profession-change/payments/{paymentId}/status:
+    get:
+      operationId: getProfessionChangePaymentStatus
+      tags: [profile]
+      summary: Verify a profession change payment with Hub2
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Profession change payment status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfessionChangePaymentStatus"
+        "404":
+          description: Payment not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /profile/cvs:
+    get:
+      operationId: listProfileCvs
+      tags: [cvs]
+      summary: List CVs attached to the current profile
+      responses:
+        "200":
+          description: CVs attached to the profile
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CvDocument"
+        "404":
+          description: Profile not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: uploadProfileCv
+      tags: [cvs]
+      summary: Upload and analyze a CV for the current profile
+      parameters:
+        - name: enrich
+          in: query
+          required: false
+          description: When false, analyze the CV without applying its fields to the profile
+          schema:
+            type: boolean
+            default: true
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/CvUploadInput"
+      responses:
+        "201":
+          description: CV uploaded and analyzed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CvDocument"
+        "400":
+          description: Invalid or missing CV file
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: CV could not be extracted or analyzed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /profile/cvs/{id}/reanalyze:
+    post:
+      operationId: reanalyzeProfileCv
+      tags: [cvs]
+      summary: Reanalyze an existing CV
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: CV reanalyzed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CvDocument"
+        "404":
+          description: CV not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: CV cannot be reanalyzed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /profile/cvs/{id}:
+    delete:
+      operationId: deleteProfileCv
+      tags: [cvs]
+      summary: Delete a CV from the current profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: CV deleted
+        "404":
+          description: CV not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /jobs:
+    get:
+      operationId: listJobs
+      tags: [jobs]
+      summary: List all scraped jobs
+      parameters:
+        - name: jobType
+          in: query
+          schema:
+            type: string
+        - name: location
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          description: Search across all searchable fields of each job
+          schema:
+            type: string
+        - name: category
+          in: query
+          description: Filter jobs by their shared job classification
+          schema:
+            type: string
+            enum:
+              - Finance & Comptabilité
+              - Commercial & Vente
+              - Administration
+              - Marketing & Communication
+              - Informatique & Tech
+              - Ressources humaines
+              - Logistique & Transport
+              - Industrie & Technique
+              - Santé
+              - Éducation
+              - BTP & Immobilier
+              - Hôtellerie & Restauration
+              - Agriculture
+              - Juridique
+              - Autres
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 200
+        - name: offset
+          in: query
+          description: Number of jobs to skip before returning results
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: List of jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Job"
+
+  /public/jobs/{id}:
+    get:
+      operationId: getPublicJobSharePreview
+      tags: [jobs]
+      summary: Get the public teaser for a shared job
+      description: Returns only the non-Premium information safe to display on a public sharing page.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Public job teaser
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicJobSharePreview"
+        "404":
+          description: Job not found or no longer available
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /jobs/scrape:
+    post:
+      operationId: triggerScrape
+      tags: [jobs]
+      summary: Trigger job scraping
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScrapeRequest"
+      responses:
+        "200":
+          description: Scraping result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScrapeResult"
+
+  /jobs/stats:
+    get:
+      operationId: getJobStats
+      tags: [jobs]
+      summary: Get aggregated job statistics
+      responses:
+        "200":
+          description: Job statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobStats"
+
+  /jobs/{id}:
+    get:
+      operationId: getJob
+      tags: [jobs]
+      summary: Get a single job by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Job found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "404":
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /matches:
+    get:
+      operationId: getMatches
+      tags: [matches]
+      summary: Get matched jobs with fit scores for current profile
+      parameters:
+        - name: minScore
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: jobId
+          in: query
+          description: Return the score for one specific job
+          schema:
+            type: integer
+            minimum: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: List of matched jobs with scores
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/JobMatch"
+        "404":
+          description: No profile found to match
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /saved:
+    get:
+      operationId: listSaved
+      tags: [matches]
+      summary: List saved/bookmarked jobs
+      responses:
+        "200":
+          description: Saved job IDs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SavedJob"
+    post:
+      operationId: saveJob
+      tags: [matches]
+      summary: Save a job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SavedJobInput"
+      responses:
+        "201":
+          description: Job saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SavedJob"
+
+  /saved/{jobId}:
+    delete:
+      operationId: unsaveJob
+      tags: [matches]
+      summary: Remove a saved job
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Job removed from saved
+
+  /premium/payments:
+    post:
+      operationId: createPremiumPayment
+      tags: [premium]
+      summary: Create a Hub2 payment link for Premium
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PremiumPaymentInput"
+      responses:
+        "201":
+          description: Payment link created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PremiumPayment"
+        "400":
+          description: Invalid plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Hub2 unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /premium/payments/{paymentId}/status:
+    get:
+      operationId: getPremiumPaymentStatus
+      tags: [premium]
+      summary: Verify a Premium payment with Hub2
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Payment status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PremiumPaymentStatus"
+        "404":
+          description: Payment not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: SessionToken
+  schemas:
+    AuthEmailInput:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+
+    AuthVerifyInput:
+      type: object
+      required: [email, code]
+      properties:
+        email:
+          type: string
+          format: email
+        code:
+          type: string
+          pattern: "^[0-9]{6}$"
+
+    AuthCodeSent:
+      type: object
+      required: [sent, expiresAt, retryAfterSeconds]
+      properties:
+        sent:
+          type: boolean
+        expiresAt:
+          type: string
+          format: date-time
+        retryAfterSeconds:
+          type: integer
+
+    AuthSessionUser:
+      type: object
+      required: [id, email, emailVerifiedAt, hasProfile, isDemo]
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        emailVerifiedAt:
+          type: ["string", "null"]
+          format: date-time
+        hasProfile:
+          type: boolean
+        isDemo:
+          type: boolean
+          description: Legacy session marker; retired demo sessions are no longer accepted
+
+    AuthSession:
+      type: object
+      required: [accessToken, user]
+      properties:
+        accessToken:
+          type: string
+        user:
+          $ref: "#/components/schemas/AuthSessionUser"
+
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+      required:
+        - error
+
+    AdminSession:
+      type: object
+      required: [authenticated, role, permissions, user]
+      properties:
+        authenticated:
+          type: boolean
+        role:
+          type: string
+          enum: [admin]
+        permissions:
+          type: array
+          items:
+            type: string
+          example: [admin:read]
+        user:
+          type: object
+          required: [id, email, name]
+          properties:
+            id:
+              type: integer
+            email:
+              type: ["string", "null"]
+              format: email
+            name:
+              type: string
+
+    AdminNotificationInput:
+      type: object
+      required: [title, body, data]
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 80
+        body:
+          type: string
+          minLength: 1
+          maxLength: 240
+        data:
+          type: object
+          maxProperties: 16
+          additionalProperties:
+            type: string
+            maxLength: 512
+
+    AdminNotificationResult:
+      type: object
+      required: [sent, deliveryStatus, attempted, accepted, failed, disabledTokens]
+      properties:
+        sent:
+          type: boolean
+        deliveryStatus:
+          type: string
+          enum: [accepted]
+        attempted:
+          type: integer
+          minimum: 0
+        accepted:
+          type: integer
+          minimum: 0
+        failed:
+          type: integer
+          minimum: 0
+        disabledTokens:
+          type: integer
+          minimum: 0
+
+    AdminProfile:
+      type: object
+      required: [id, email, name, skills, experienceYears, location, remote, jobTypes, notificationsEnabled, isPremium, registeredAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        email:
+          type: ["string", "null"]
+          format: email
+        emailVerifiedAt:
+          type: ["string", "null"]
+          format: date-time
+        name:
+          type: string
+        title:
+          type: ["string", "null"]
+        skills:
+          type: array
+          items:
+            type: string
+        experienceYears:
+          type: integer
+        location:
+          type: string
+        remote:
+          type: boolean
+        jobTypes:
+          type: array
+          items:
+            type: string
+        salaryMin:
+          type: ["integer", "null"]
+        salaryMax:
+          type: ["integer", "null"]
+        bio:
+          type: ["string", "null"]
+        linkedin:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        diploma:
+          type: ["string", "null"]
+        lastJobTitle:
+          type: ["string", "null"]
+        profilePhoto:
+          type: ["string", "null"]
+        notificationsEnabled:
+          type: boolean
+        isPremium:
+          type: boolean
+        premiumUntil:
+          type: ["string", "null"]
+          format: date-time
+        lastProfessionChangeAt:
+          type: ["string", "null"]
+          format: date-time
+        registeredAt:
+          type: ["string", "null"]
+          format: date-time
+          description: Earliest authenticated session creation date, when available
+        updatedAt:
+          type: string
+          format: date-time
+
+    AdminUserList:
+      type: object
+      required: [users, pagination]
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminUserSummary"
+        pagination:
+          $ref: "#/components/schemas/AdminPagination"
+
+    AdminUserSummary:
+      type: object
+      required: [id, email, name, experienceYears, location, isPremium, registeredAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        email:
+          type: ["string", "null"]
+          format: email
+        emailVerifiedAt:
+          type: ["string", "null"]
+          format: date-time
+        name:
+          type: string
+        title:
+          type: ["string", "null"]
+        experienceYears:
+          type: integer
+        location:
+          type: string
+        isPremium:
+          type: boolean
+        premiumUntil:
+          type: ["string", "null"]
+          format: date-time
+        registeredAt:
+          type: ["string", "null"]
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    AdminPagination:
+      type: object
+      required: [page, pageSize, total, totalPages, hasNextPage, hasPreviousPage]
+      properties:
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+        hasNextPage:
+          type: boolean
+        hasPreviousPage:
+          type: boolean
+
+    AdminCv:
+      type: object
+      required: [id, fileName, mimeType, fileSize, status, extractedText, analysis, errorMessage, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        fileName:
+          type: string
+        mimeType:
+          type: string
+        fileSize:
+          type: integer
+        status:
+          type: string
+        extractedText:
+          type: ["string", "null"]
+        analysis:
+          type: ["object", "null"]
+          additionalProperties: true
+        errorMessage:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    AdminJob:
+      type: object
+      required: [id, title, company, location, remote, skills, jobType, source]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        company:
+          type: string
+        logoUrl:
+          type: ["string", "null"]
+        location:
+          type: string
+        remote:
+          type: boolean
+        skills:
+          type: array
+          items:
+            type: string
+        jobType:
+          type: string
+        salaryMin:
+          type: ["integer", "null"]
+        salaryMax:
+          type: ["integer", "null"]
+        source:
+          type: string
+        sourceUrl:
+          type: ["string", "null"]
+        postedAt:
+          type: ["string", "null"]
+        experienceYears:
+          type: ["integer", "null"]
+        sector:
+          type: ["string", "null"]
+        diplomaRequired:
+          type: ["string", "null"]
+
+    AdminFavorite:
+      type: object
+      required: [id, savedAt, job]
+      properties:
+        id:
+          type: integer
+        savedAt:
+          type: string
+          format: date-time
+        job:
+          allOf:
+            - $ref: "#/components/schemas/AdminJob"
+          nullable: true
+
+    AdminActivitySession:
+      type: object
+      required: [id, isDemo, expiresAt, revokedAt, createdAt]
+      properties:
+        id:
+          type: integer
+        isDemo:
+          type: boolean
+        expiresAt:
+          type: string
+          format: date-time
+        revokedAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    AdminActivity:
+      type: object
+      required: [sessions, lastSessionAt, latestCvAt, latestFavoriteAt]
+      properties:
+        sessions:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminActivitySession"
+        lastSessionAt:
+          type: ["string", "null"]
+          format: date-time
+        latestCvAt:
+          type: ["string", "null"]
+          format: date-time
+        latestFavoriteAt:
+          type: ["string", "null"]
+          format: date-time
+
+    AdminPayment:
+      type: object
+      required: [id, plan, amount, status, purchaseReference, paymentLinkExpiresAt, premiumUntil, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        plan:
+          type: string
+        amount:
+          type: integer
+        status:
+          type: string
+        purchaseReference:
+          type: string
+        paymentLinkExpiresAt:
+          type: ["string", "null"]
+          format: date-time
+        premiumUntil:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    AdminProfessionPayment:
+      type: object
+      required: [id, requestedTitle, amount, status, purchaseReference, paymentLinkExpiresAt, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        requestedTitle:
+          type: string
+        amount:
+          type: integer
+        status:
+          type: string
+        purchaseReference:
+          type: string
+        paymentLinkExpiresAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    AdminUserDetail:
+      type: object
+      required: [profile, cvs, favorites, activity, payments]
+      properties:
+        profile:
+          $ref: "#/components/schemas/AdminProfile"
+        cvs:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminCv"
+        favorites:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminFavorite"
+        activity:
+          $ref: "#/components/schemas/AdminActivity"
+        payments:
+          type: object
+          required: [premium, professionChanges]
+          properties:
+            premium:
+              type: array
+              items:
+                $ref: "#/components/schemas/AdminPayment"
+            professionChanges:
+              type: array
+              items:
+                $ref: "#/components/schemas/AdminProfessionPayment"
+
+    AdminPaymentStats:
+      type: object
+      required: [total, completed, pending, failed, completedAmount]
+      properties:
+        total:
+          type: integer
+        completed:
+          type: integer
+        pending:
+          type: integer
+        failed:
+          type: integer
+        completedAmount:
+          type: integer
+
+    AdminStats:
+      type: object
+      required: [generatedAt, users, cvs, favorites, payments]
+      properties:
+        generatedAt:
+          type: string
+          format: date-time
+        users:
+          type: object
+          required: [total, newLast30Days, profilesCompleted, premiumActive]
+          properties:
+            total:
+              type: integer
+            newLast30Days:
+              type: integer
+            profilesCompleted:
+              type: integer
+            premiumActive:
+              type: integer
+        cvs:
+          type: object
+          required: [analyzed]
+          properties:
+            analyzed:
+              type: integer
+        favorites:
+          type: object
+          required: [total]
+          properties:
+            total:
+              type: integer
+        payments:
+          allOf:
+            - $ref: "#/components/schemas/AdminPaymentStats"
+          required: [currency, premium, professionChanges]
+          properties:
+            currency:
+              type: string
+              enum: [XOF]
+            premium:
+              $ref: "#/components/schemas/AdminPaymentStats"
+            professionChanges:
+              $ref: "#/components/schemas/AdminPaymentStats"
+
+    AccountDeleteToken:
+      type: object
+      required: [token, expiresAt]
+      properties:
+        token:
+          type: string
+          description: One-time Bearer token to present to DELETE /profile
+        expiresAt:
+          type: string
+          format: date-time
+          description: ISO-8601 timestamp after which the token expires
+
+    CandidateProfile:
+      type: object
+      required: [id, name, skills, experienceYears, location, jobTypes, updatedAt, isDemo]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        title:
+          type: ["string", "null"]
+        skills:
+          type: array
+          items:
+            type: string
+        experienceYears:
+          type: integer
+        location:
+          type: string
+        remote:
+          type: boolean
+        jobTypes:
+          type: array
+          items:
+            type: string
+        salaryMin:
+          type: ["integer", "null"]
+        salaryMax:
+          type: ["integer", "null"]
+        bio:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+        linkedin:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        diploma:
+          type: ["string", "null"]
+        lastJobTitle:
+          type: ["string", "null"]
+        profilePhoto:
+          type: ["string", "null"]
+          description: Private compressed image data for the authenticated user's profile
+        lastProfessionChangeAt:
+          type: ["string", "null"]
+        professionChangeAvailableAt:
+          type: ["string", "null"]
+        notificationsEnabled:
+          type: boolean
+        isPremium:
+          type: boolean
+        premiumUntil:
+          type: ["string", "null"]
+        premiumTrialUntil:
+          type: ["string", "null"]
+          format: date-time
+          description: End timestamp for the one-time free Premium trial, when applicable
+        isPremiumTrial:
+          type: boolean
+          description: Whether this profile currently has Premium through its free trial
+        isPremiumTrialExpired:
+          type: boolean
+          description: Whether the free trial expired without a paid Premium extension
+        latestCv:
+          allOf:
+            - $ref: "#/components/schemas/CvDocument"
+          nullable: true
+        updatedAt:
+          type: string
+        isDeviceRegistered:
+          type: boolean
+          description: >
+            True when a device-credential hash is stored for this account. The
+            mobile client uses this to determine whether the in-app delete flow
+            is available or whether the user should be directed to a support
+            contact for legacy accounts created before the credential feature.
+        isDemo:
+          type: boolean
+          description: Legacy session marker; retired demo sessions are no longer accepted
+
+    CandidateProfileInput:
+      type: object
+      required: [name, skills, experienceYears, location, jobTypes]
+      properties:
+        name:
+          type: string
+        title:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        experienceYears:
+          type: integer
+        location:
+          type: string
+        remote:
+          type: boolean
+        jobTypes:
+          type: array
+          items:
+            type: string
+        salaryMin:
+          type: integer
+        salaryMax:
+          type: integer
+        bio:
+          type: string
+        email:
+          type: string
+        linkedin:
+          type: string
+        phone:
+          type: string
+        diploma:
+          type: string
+        lastJobTitle:
+          type: string
+
+    UpdateProfilePhotoInput:
+      type: object
+      required: [profilePhoto]
+      properties:
+        profilePhoto:
+          type: string
+          maxLength: 1600000
+          pattern: "^data:image/(jpeg|png|webp);base64,"
+          description: Compressed image as a data URL
+
+    ProfessionChangePaymentInput:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+          minLength: 1
+
+    ProfessionChangePayment:
+      type: object
+      required: [id, amount, status, checkoutUrl, purchaseReference, environment]
+      properties:
+        id:
+          type: integer
+        amount:
+          type: integer
+          example: 2000
+        status:
+          type: string
+        checkoutUrl:
+          type: string
+          format: uri
+        purchaseReference:
+          type: string
+        paymentLinkExpiresAt:
+          type: ["string", "null"]
+        environment:
+          type: string
+          enum: [sandbox, live]
+        sandboxTestPhone:
+          type: ["string", "null"]
+
+    ProfessionChangePaymentStatus:
+      type: object
+      required: [id, status, title]
+      properties:
+        id:
+          type: integer
+        status:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+        failureReason:
+          type: ["string", "null"]
+
+    ProfessionChangeRequiredError:
+      allOf:
+        - $ref: "#/components/schemas/ErrorResponse"
+        - type: object
+          properties:
+            code:
+              type: string
+              enum: [PROFESSION_CHANGE_PAYMENT_REQUIRED]
+            professionChangeAvailableAt:
+              type: string
+            amount:
+              type: integer
+              example: 2000
+    NotificationRegistrationInput:
+      type: object
+      required: [enabled]
+      properties:
+        token:
+          type: ["string", "null"]
+          maxLength: 4096
+        enabled:
+          type: boolean
+        platform:
+          type: string
+          enum: [ios, android]
+
+    NotificationRegistration:
+      type: object
+      required: [enabled, provider]
+      properties:
+        enabled:
+          type: boolean
+        provider:
+          type: string
+          enum: [firebase]
+
+    NotificationTestInput:
+      type: object
+      required: [jobId]
+      properties:
+        jobId:
+          type: integer
+
+    NotificationTest:
+      type: object
+      required: [sent, deliveryStatus, jobId, title, company]
+      properties:
+        sent:
+          type: boolean
+        deliveryStatus:
+          type: string
+          enum: [accepted, delivered]
+          description: >
+            Whether Firebase Cloud Messaging accepted the message for delivery.
+        jobId:
+          type: integer
+        title:
+          type: string
+        company:
+          type: string
+
+    ErrorReportInput:
+      type: object
+      required: [name, phone, description]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        phone:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          minLength: 1
+        photo:
+          type: string
+
+    ErrorReport:
+      type: object
+      required: [id, name, phone, description, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+        description:
+          type: string
+        hasPhoto:
+          type: boolean
+        createdAt:
+          type: string
+
+    CvExperience:
+      type: object
+      required: [title, company, current, description, skills]
+      properties:
+        title:
+          type: string
+        company:
+          type: string
+        location:
+          type: ["string", "null"]
+        startDate:
+          type: ["string", "null"]
+        endDate:
+          type: ["string", "null"]
+        current:
+          type: boolean
+        description:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+
+    CvEducation:
+      type: object
+      required: [degree, school]
+      properties:
+        degree:
+          type: string
+        school:
+          type: string
+        field:
+          type: ["string", "null"]
+        startDate:
+          type: ["string", "null"]
+        endDate:
+          type: ["string", "null"]
+
+    CvAnalysis:
+      type: object
+      required: [skills, softSkills, languages, experiences, education, certifications, sectors, desiredRoles]
+      properties:
+        fullName:
+          type: ["string", "null"]
+        headline:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        location:
+          type: ["string", "null"]
+        summary:
+          type: ["string", "null"]
+        skills:
+          type: array
+          items:
+            type: string
+        softSkills:
+          type: array
+          items:
+            type: string
+        languages:
+          type: array
+          items:
+            type: string
+        yearsExperience:
+          type: ["integer", "null"]
+        experiences:
+          type: array
+          items:
+            $ref: "#/components/schemas/CvExperience"
+        education:
+          type: array
+          items:
+            $ref: "#/components/schemas/CvEducation"
+        certifications:
+          type: array
+          items:
+            type: string
+        sectors:
+          type: array
+          items:
+            type: string
+        desiredRoles:
+          type: array
+          items:
+            type: string
+
+    CvDocument:
+      type: object
+      required: [id, fileName, mimeType, fileSize, status, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        fileName:
+          type: string
+        mimeType:
+          type: string
+        fileSize:
+          type: integer
+        status:
+          type: string
+          enum: [processing, completed, failed]
+        analysis:
+          allOf:
+            - $ref: "#/components/schemas/CvAnalysis"
+          nullable: true
+        errorMessage:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CvUploadInput:
+      type: object
+      required: [file]
+      properties:
+        file:
+          type: string
+          description: CV file sent as multipart form-data
+
+    Job:
+      type: object
+      required: [id, title, company, description, location, skills, jobType, source, scrapedAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        company:
+          type: string
+        logoUrl:
+          type: ["string", "null"]
+          description: URL du logo de l'entreprise
+        description:
+          type: string
+        location:
+          type: string
+        remote:
+          type: boolean
+        skills:
+          type: array
+          items:
+            type: string
+        jobType:
+          type: string
+        salaryMin:
+          type: ["integer", "null"]
+        salaryMax:
+          type: ["integer", "null"]
+        source:
+          type: string
+        sourceUrl:
+          type: ["string", "null"]
+        postedAt:
+          type: ["string", "null"]
+        experienceYears:
+          type: ["integer", "null"]
+        sector:
+          type: ["string", "null"]
+        diplomaRequired:
+          type: ["string", "null"]
+        scrapedAt:
+          type: string
+
+    PublicJobSharePreview:
+      type: object
+      required: [id, title, company, location, remote, skills, jobType, source, postedAt, scrapedAt, summary, isVerified]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        company:
+          type: string
+        logoUrl:
+          type: ["string", "null"]
+        location:
+          type: string
+        remote:
+          type: boolean
+        skills:
+          type: array
+          items:
+            type: string
+        jobType:
+          type: string
+        source:
+          type: string
+        postedAt:
+          type: ["string", "null"]
+        scrapedAt:
+          type: string
+        sector:
+          type: ["string", "null"]
+        experienceYears:
+          type: ["integer", "null"]
+        summary:
+          type: string
+        isVerified:
+          type: boolean
+
+    JobMatch:
+      type: object
+      required: [job, fitScore, titleScore, skillScore, experienceScore]
+      properties:
+        job:
+          $ref: "#/components/schemas/Job"
+        fitScore:
+          type: integer
+          description: Overall fit score 0-100
+        titleScore:
+          type: integer
+          description: Job title match to profile target role 0-100
+        skillScore:
+          type: integer
+          description: Skill match score 0-100
+        experienceScore:
+          type: integer
+          description: Experience level match score 0-100
+
+    SavedJob:
+      type: object
+      required: [id, jobId, savedAt]
+      properties:
+        id:
+          type: integer
+        jobId:
+          type: integer
+        savedAt:
+          type: string
+        job:
+          $ref: "#/components/schemas/Job"
+
+    SavedJobInput:
+      type: object
+      required: [jobId]
+      properties:
+        jobId:
+          type: integer
+
+    JobStats:
+      type: object
+      required: [totalJobs, totalSources, topSkills, jobTypeBreakdown, categoryBreakdown]
+      properties:
+        totalJobs:
+          type: integer
+        totalSources:
+          type: integer
+        avgFitScore:
+          type: ["integer", "null"]
+        topSkills:
+          type: array
+          items:
+            type: object
+            required: [skill, count]
+            properties:
+              skill:
+                type: string
+              count:
+                type: integer
+        jobTypeBreakdown:
+          type: array
+          items:
+            type: object
+            required: [jobType, count]
+            properties:
+              jobType:
+                type: string
+              count:
+                type: integer
+        categoryBreakdown:
+          type: array
+          items:
+            type: object
+            required: [category, count]
+            properties:
+              category:
+                type: string
+              count:
+                type: integer
+
+    ScrapeRequest:
+      type: object
+      properties:
+        keywords:
+          type: string
+        location:
+          type: string
+
+    ScrapeResult:
+      type: object
+      required: [jobsAdded, jobsUpdated, total]
+      properties:
+        jobsAdded:
+          type: integer
+        jobsUpdated:
+          type: integer
+        total:
+          type: integer
+        message:
+          type: string
+
+    PremiumPaymentInput:
+      type: object
+      required: [plan]
+      properties:
+        plan:
+          type: string
+          enum: [monthly, annual]
+
+    PremiumPayment:
+      type: object
+      required: [id, plan, amount, status, checkoutUrl, purchaseReference, environment]
+      properties:
+        id:
+          type: integer
+        plan:
+          type: string
+          enum: [monthly, annual]
+        amount:
+          type: integer
+        status:
+          type: string
+        checkoutUrl:
+          type: string
+          format: uri
+        purchaseReference:
+          type: string
+        paymentLinkExpiresAt:
+          type: ["string", "null"]
+        environment:
+          type: string
+          enum: [sandbox, live]
+        sandboxTestPhone:
+          type: ["string", "null"]
+
+    PremiumPaymentStatus:
+      type: object
+      required: [id, status, isPremium]
+      properties:
+        id:
+          type: integer
+        status:
+          type: string
+        isPremium:
+          type: boolean
+        premiumUntil:
+          type: ["string", "null"]
+        failureReason:
+          type: ["string", "null"]
+        message:
+          type: string

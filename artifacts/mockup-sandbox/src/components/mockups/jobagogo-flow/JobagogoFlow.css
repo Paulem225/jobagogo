@@ -1,0 +1,140 @@
+.jobagogo-flow {
+  min-height: 100vh;
+  padding: 22px 20px 28px;
+  background: #f4f5f7;
+  color: #202124;
+  font-family: "Inter", "Arial", sans-serif;
+}
+
+.jobagogo-flow-header {
+  width: min(100%, 480px);
+  margin: 0 auto 14px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.jobagogo-flow-kicker {
+  margin: 0 0 4px;
+  color: #119c63;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.jobagogo-flow-header h1 {
+  margin: 0;
+  font-size: 24px;
+  letter-spacing: -.04em;
+}
+
+.jobagogo-flow-state {
+  padding: 7px 10px;
+  border: 1px solid #dfe3e7;
+  border-radius: 999px;
+  background: #fff;
+  color: #727780;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.jobagogo-flow-steps {
+  width: min(100%, 480px);
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.jobagogo-flow-step-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.jobagogo-flow-step-wrap i {
+  color: #b2b6bd;
+  font-size: 13px;
+  font-style: normal;
+}
+
+.jobagogo-flow-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 9px;
+  border: 1px solid #dfe3e7;
+  border-radius: 999px;
+  background: #fff;
+  color: #727780;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.jobagogo-flow-step:disabled {
+  cursor: default;
+  opacity: .55;
+}
+
+.jobagogo-flow-step.is-active {
+  border-color: #119c63;
+  background: #119c63;
+  color: #fff;
+}
+
+.jobagogo-flow-step span {
+  display: grid;
+  width: 17px;
+  height: 17px;
+  place-items: center;
+  border-radius: 50%;
+  background: #eef1f2;
+  color: #70757c;
+  font-size: 10px;
+}
+
+.jobagogo-flow-step.is-active span {
+  background: rgba(255, 255, 255, .2);
+  color: #fff;
+}
+
+.jobagogo-flow-screen {
+  width: min(100%, 502px);
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 28px;
+  box-shadow: 0 20px 48px rgba(25, 32, 39, .14);
+}
+
+.jobagogo-flow-screen > main {
+  min-height: 996px;
+}
+
+@media (max-width: 540px) {
+  .jobagogo-flow {
+    padding-inline: 10px;
+  }
+
+  .jobagogo-flow-header,
+  .jobagogo-flow-steps {
+    width: 100%;
+  }
+
+  .jobagogo-flow-step {
+    padding-inline: 7px;
+  }
+
+  .jobagogo-flow-step-wrap {
+    gap: 4px;
+  }
+
+  .jobagogo-flow-step-wrap i {
+    font-size: 10px;
+  }
+}

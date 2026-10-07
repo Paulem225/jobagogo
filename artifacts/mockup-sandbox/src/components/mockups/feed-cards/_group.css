@@ -1,0 +1,16 @@
+:root {
+  --bg: #0A1628;
+  --card: #111E35;
+  --border: #1E2E4A;
+  --primary: #00D4B8;
+  --primary-15: rgba(0,212,184,0.15);
+  --primary-40: rgba(0,212,184,0.4);
+  --accent: #F59E0B;
+  --fg: #F1F5F9;
+  --muted: #64748B;
+  --secondary: #1A2740;
+  --secondary-fg: #94A3B8;
+  --score-green: #10B981;
+  --score-yellow: #F59E0B;
+  --score-red: #EF4444;
+}

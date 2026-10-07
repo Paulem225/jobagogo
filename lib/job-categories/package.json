@@ -1,0 +1,15 @@
+{
+  "name": "@workspace/job-categories",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "node --import ../../scripts/node_modules/tsx/dist/loader.mjs --test src/index.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:"
+  }
+}
